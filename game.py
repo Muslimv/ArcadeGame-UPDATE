@@ -12,40 +12,38 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 pygame.init()
 pygame.mixer.init()
 
-# Переменная для отслеживания состояния воспроизведения музыки
+# Переменная для управления воспроизведением музыки
 music_play = False
 
 # Закомментированная строка для бесконечного воспроизведения музыки
 # pygame.mixer.music.play(-1)
 
-# Загрузка звука победы и установка его громкости
+# Загрузка звука победы и настройка громкости
 victory_sound = pygame.mixer.Sound('sounds/victory.wav')
 victory_sound.set_volume(1.0)
 
-# Загрузка изображения для экрана "Игра окончена"
+# Загрузка изображений для экранов "Игра окончена" и победы
 game_over_image = pygame.image.load('assets/images/game_over.png')
+win_image = pygame.image.load('assets/images/win.png')
 
 # Загрузка звука для экрана "Игра окончена"
 game_over_sound = pygame.mixer.Sound('sounds/g_o.wav')
 
-# Загрузка изображения для экрана победы
-win_image = pygame.image.load('assets/images/win.png')
-
 # Загрузка изображения для главного меню
 menu_image = pygame.image.load('assets/images/menu.png')
 
-# Получение информации о текущем разрешении экрана
+# Получение информации о разрешении экрана
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
 
-# Установка размеров окна игры (меньше, чем разрешение экрана)
+# Установка размеров окна игры (немного меньше, чем разрешение экрана)
 window_width, window_height = screen_width - 800, screen_height - 150
 
-# Создание объекта для управления временем и FPS (кадры в секунду)
+# Создание таймера для управления FPS (частота кадров)
 timer = pygame.time.Clock()
 fps = 60
 
-# Установка заголовка окна игры
+# Настройка заголовка окна игры
 pygame.display.set_caption('Donkey Kong')
 
 # Загрузка и установка иконки для окна игры
@@ -63,73 +61,109 @@ screen = pygame.display.set_mode([window_width, window_height])
 section_width = window_width // 32
 section_height = window_height // 32
 
-# Вычисление наклона (slope) для игрового поля
+# Вычисление наклона для игрового поля
 slope = section_height // 8
 
-# Время (в кадрах) между появлением новых бочек
-barrel_spawn_time = 360
+# Настройка времени появления бочек
+barrel_spawn_time = 360  # Время между появлением бочек
+barrel_count = barrel_spawn_time / 2  # Счетчик для управления появлением бочек
+barrel_time = 360  # Время для управления появлением бочек
 
-# Счетчик для управления появлением бочек (начальное значение — половина от barrel_spawn_time)
-barrel_count = barrel_spawn_time / 2
+# Загрузка и масштабирование изображений для игры
 
-# Время (в кадрах) для управления временем появления бочек
-barrel_time = 360
+# Бочка
+barrel_img = pygame.transform.scale(
+    pygame.image.load('assets/images/barrels/barrel.png'),
+    (section_width * 1.5, section_height * 2)
+)
 
-# Загрузка и масштабирование изображения бочки
-barrel_img = pygame.transform.scale(pygame.image.load('assets/images/barrels/barrel.png'),
-                                    (section_width * 1.5, section_height * 2))
+# Огонь (пламя)
+flames_img = pygame.transform.scale(
+    pygame.image.load('assets/images/fire.png'),
+    (section_width * 2, section_height)
+)
 
-# Загрузка и масштабирование изображения огня (пламени)
-flames_img = pygame.transform.scale(pygame.image.load('assets/images/fire.png'),
-                                    (section_width * 2, section_height))
+# Бочка (вид сбоку)
+barrel_side = pygame.transform.scale(
+    pygame.image.load('assets/images/barrels/barrel2.png'),
+    (section_width * 2, section_height * 2.5)
+)
 
-# Загрузка и масштабирование изображения бочки (вид сбоку)
-barrel_side = pygame.transform.scale(pygame.image.load('assets/images/barrels/barrel2.png'),
-                                     (section_width * 2, section_height * 2.5))
+# Донки Конг (три кадра для анимации)
+dk1 = pygame.transform.scale(
+    pygame.image.load('assets/images/dk/dk1.png'),
+    (section_width * 5, section_height * 5)
+)
+dk2 = pygame.transform.scale(
+    pygame.image.load('assets/images/dk/dk2.png'),
+    (section_width * 5, section_height * 5)
+)
+dk3 = pygame.transform.scale(
+    pygame.image.load('assets/images/dk/dk3.png'),
+    (section_width * 5, section_height * 5)
+)
 
-# Загрузка и масштабирование изображений Донки Конга (три разных кадра для анимации)
-dk1 = pygame.transform.scale(pygame.image.load('assets/images/dk/dk1.png'),
-                             (section_width * 5, section_height * 5))
-dk2 = pygame.transform.scale(pygame.image.load('assets/images/dk/dk2.png'),
-                             (section_width * 5, section_height * 5))
-dk3 = pygame.transform.scale(pygame.image.load('assets/images/dk/dk3.png'),
-                             (section_width * 5, section_height * 5))
+# Принцесса Пич (два кадра для анимации)
+peach1 = pygame.transform.scale(
+    pygame.image.load('assets/images/peach/peach1.png'),
+    (2 * section_width, 3 * section_height)
+)
+peach2 = pygame.transform.scale(
+    pygame.image.load('assets/images/peach/peach2.png'),
+    (2 * section_width, 3 * section_height)
+)
 
-# Загрузка и масштабирование изображений принцессы Пич (два разных кадра для анимации)
-peach1 = pygame.transform.scale(pygame.image.load('assets/images/peach/peach1.png'),
-                                (2 * section_width, 3 * section_height))
-peach2 = pygame.transform.scale(pygame.image.load('assets/images/peach/peach2.png'),
-                                (2 * section_width, 3 * section_height))
+# Огненный шар (два кадра для анимации)
+fireball = pygame.transform.scale(
+    pygame.image.load('assets/images/fireball.png'),
+    (1.5 * section_width, 2 * section_height)
+)
+fireball2 = pygame.transform.scale(
+    pygame.image.load('assets/images/fireball2.png'),
+    (1.5 * section_width, 2 * section_height)
+)
 
-# Загрузка и масштабирование изображений огненного шара (два разных кадра для анимации)
-fireball = pygame.transform.scale(pygame.image.load('assets/images/fireball.png'),
-                                  (1.5 * section_width, 2 * section_height))
-fireball2 = pygame.transform.scale(pygame.image.load('assets/images/fireball2.png'),
-                                   (1.5 * section_width, 2 * section_height))
+# Молоток
+hammer = pygame.transform.scale(
+    pygame.image.load('assets/images/hammer.png'),
+    (2 * section_width, 2 * section_height)
+)
 
-# Загрузка и масштабирование изображения молотка
-hammer = pygame.transform.scale(pygame.image.load('assets/images/hammer.png'),
-                                   (2 * section_width, 2 * section_height))
+# Марио (разные состояния и анимации)
+standing = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/standing.png'),
+    (2 * section_width, 2.5 * section_height)
+)
+jumping = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/jumping.png'),
+    (2 * section_width, 2.5 * section_height)
+)
+running = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/running.png'),
+    (2 * section_width, 2.5 * section_height)
+)
+climbing1 = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/climbing1.png'),
+    (2 * section_width, 2.5 * section_height)
+)
+climbing2 = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/climbing2.png'),
+    (2 * section_width, 2.5 * section_height)
+)
 
-# Загрузка и масштабирование изображений Марио (разные состояния и анимации)
-standing = pygame.transform.scale(pygame.image.load('assets/images/mario/standing.png'),
-                                  (2 * section_width, 2.5 * section_height))
-jumping = pygame.transform.scale(pygame.image.load('assets/images/mario/jumping.png'),
-                                 (2 * section_width, 2.5 * section_height))
-running = pygame.transform.scale(pygame.image.load('assets/images/mario/running.png'),
-                                 (2 * section_width, 2.5 * section_height))
-climbing1 = pygame.transform.scale(pygame.image.load('assets/images/mario/climbing1.png'),
-                                   (2 * section_width, 2.5 * section_height))
-climbing2 = pygame.transform.scale(pygame.image.load('assets/images/mario/climbing2.png'),
-                                   (2 * section_width, 2.5 * section_height))
-
-# Загрузка и масштабирование изображений Марио с молотком (разные состояния и анимации)
-hammer_stand = pygame.transform.scale(pygame.image.load('assets/images/mario/hammer_stand.png'),
-                                      (2.5 * section_width, 2.5 * section_height))
-hammer_jump = pygame.transform.scale(pygame.image.load('assets/images/mario/hammer_jump.png'),
-                                     (2.5 * section_width, 2.5 * section_height))
-hammer_overhead = pygame.transform.scale(pygame.image.load('assets/images/mario/hammer_overhead.png'),
-                                         (2.5 * section_width, 3.5 * section_height))
+# Марио с молотком (разные состояния и анимации)
+hammer_stand = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/hammer_stand.png'),
+    (2.5 * section_width, 2.5 * section_height)
+)
+hammer_jump = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/hammer_jump.png'),
+    (2.5 * section_width, 2.5 * section_height)
+)
+hammer_overhead = pygame.transform.scale(
+    pygame.image.load('assets/images/mario/hammer_overhead.png'),
+    (2.5 * section_width, 3.5 * section_height)
+)
 
 
 # Начальная координата Y для нижней платформы (стартовая позиция)
@@ -179,6 +213,9 @@ victory = False
 
 # Флаг для сброса игры
 reset_game = False
+
+# флаг для отслеживания успешных прыжков через бочку
+successful_jump = False
 
 # Уровни игры, содержащие информацию о платформах, лестницах, молотках и цели
 levels = [
@@ -233,6 +270,17 @@ levels = [
     }
 ]
 
+# функция для проверки успешного прыжка через бочку
+def check_successful_jump(player, barrels):
+    global score, successful_jump
+    for barrel in barrels:
+        # Проверяем, находится ли игрок над бочкой и прыгает ли он
+        if player.rect.bottom < barrel.rect.top and player.y_change < 0:
+            successful_jump = True
+        # Если игрок приземлился после успешного прыжка
+        if successful_jump and player.landed:
+            score += 50  # Начисляем дополнительные очки
+            successful_jump = False  # Сбрасываем флаг
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x_pos, y_pos):
@@ -390,6 +438,7 @@ class Barrel(pygame.sprite.Sprite):
         self.falling = False  # Флаг, указывающий, падает ли бочка
         self.check_lad = False  # Флаг для проверки коллизии с лестницей
         self.bottom = self.rect  # Нижний прямоугольник для проверки коллизий
+        self.bounce_count = 0  # Счетчик отскоков
 
     def update(self, fire_trig):
         """Обновление состояния бочки (движение, падение, коллизии)."""
@@ -398,8 +447,17 @@ class Barrel(pygame.sprite.Sprite):
         # Проверка коллизий с платформами
         for i in range(len(plats)):
             if self.bottom.colliderect(plats[i]):
-                self.y_change = 0  # Остановка падения
-                self.falling = False  # Бочка больше не падает
+                if self.falling:  # Если бочка падает
+                    self.bounce_count += 1
+                    if self.bounce_count < 3:  # Максимум 3 отскока
+                        self.y_change = -4  # Отскок вверх
+                        self.falling = False
+                    else:
+                        self.y_change = 0  # Остановка отскоков
+                        self.falling = False
+                else:
+                    self.y_change = 0  # Остановка падения
+                    self.falling = False  # Бочка больше не падает
         # Проверка коллизии с масляной бочкой
         if self.rect.colliderect(oil_drum):
             if not self.oil_collision:
@@ -449,6 +507,7 @@ class Barrel(pygame.sprite.Sprite):
                 if random.randint(0, 60) == 60:  # Случайный шанс начать падение
                     self.falling = True
                     self.y_change = 4
+                    self.bounce_count = 0  # Сброс счетчика отскоков
         if not already_collided:
             self.check_lad = False
 
@@ -472,16 +531,27 @@ class Flame(pygame.sprite.Sprite):
         self.row = 1  # Текущий ряд, на котором находится огненный шар
         self.check_lad = False  # Флаг для проверки коллизии с лестницей
         self.climbing = False  # Флаг, указывающий, карабкается ли огненный шар по лестнице
+        self.hover_timer = 0  # Таймер для зависания на платформе
+        self.hovering = False  # Флаг, указывающий, завис ли огненный шар
 
     def update(self):
         """Обновление состояния огненного шара (движение, анимация, коллизии)."""
-        if self.y_change < 3 and not self.climbing:  # Увеличение скорости падения
+        if self.y_change < 3 and not self.climbing and not self.hovering:  # Увеличение скорости падения
             flame.y_change += 0.25
         # Проверка коллизий с платформами
         for i in range(len(plats)):
             if self.rect.colliderect(plats[i]):
+                if not self.hovering:  # Если огненный шар не завис
+                    self.hovering = True
+                    self.hover_timer = 30  # Установка таймера зависания
                 flame.climbing = False  # Остановка карабкания
-                flame.y_change = -4  # Отскок от платформы
+                flame.y_change = 0  # Остановка движения по Y
+        # Управление зависанием
+        if self.hovering:
+            self.hover_timer -= 1
+            if self.hover_timer <= 0:
+                self.hovering = False
+                self.y_change = -4  # Отскок от платформы
         # Управление анимацией и изменением направления
         if self.count < 15:
             self.count += 1
@@ -554,11 +624,22 @@ class Bridge:
         self.y_pos = y_pos  # Позиция Y
         self.length = length  # Длина платформы (в секциях)
         self.top = self.draw()  # Верхняя линия платформы (для коллизий)
+        self.color_timer = 0  # Таймер для изменения цвета платформы
+        self.current_color = (225, 51, 129)  # Текущий цвет платформы
 
     def draw(self):
         """Отрисовка платформы."""
         line_width = 7  # Толщина линий
-        platform_color = (225, 51, 129)  # Цвет платформы
+        # Плавное изменение цвета платформы
+        self.color_timer += 1
+        if self.color_timer > 60:
+            self.color_timer = 0
+        # Изменение цвета платформы в зависимости от таймера
+        self.current_color = (
+            225,
+            51 + int(50 * abs((self.color_timer / 30) - 1)),
+            129 + int(50 * abs((self.color_timer / 30) - 1))
+        )
         for i in range(self.length):
             # Координаты для отрисовки платформы
             bot_coord = self.y_pos + section_height
@@ -567,13 +648,13 @@ class Bridge:
             right_coord = left_coord + section_width
             top_coord = self.y_pos
             # Отрисовка линий платформы
-            pygame.draw.line(screen, platform_color, (left_coord, top_coord),
+            pygame.draw.line(screen, self.current_color, (left_coord, top_coord),
                              (right_coord, top_coord), line_width)
-            pygame.draw.line(screen, platform_color, (left_coord, bot_coord),
+            pygame.draw.line(screen, self.current_color, (left_coord, bot_coord),
                              (right_coord, bot_coord), line_width)
-            pygame.draw.line(screen, platform_color, (left_coord, bot_coord),
+            pygame.draw.line(screen, self.current_color, (left_coord, bot_coord),
                              (mid_coord, top_coord), line_width)
-            pygame.draw.line(screen, platform_color, (mid_coord, top_coord),
+            pygame.draw.line(screen, self.current_color, (mid_coord, top_coord),
                              (right_coord, bot_coord), line_width)
         # Верхняя линия платформы (для коллизий)
         top_line = pygame.rect.Rect((self.x_pos, self.y_pos), (self.length * section_width, 2))
@@ -587,11 +668,22 @@ class Ladder:
         self.y_pos = y_pos  # Позиция Y
         self.length = length  # Длина лестницы (в секциях)
         self.body = self.draw()  # Тело лестницы (для коллизий)
+        self.color_timer = 0  # Таймер для изменения цвета лестницы
+        self.current_color = 'light blue'  # Текущий цвет лестницы
 
     def draw(self):
         """Отрисовка лестницы."""
         line_width = 3  # Толщина линий
-        lad_color = 'light blue'  # Цвет лестницы
+        # Плавное изменение цвета лестницы
+        self.color_timer += 1
+        if self.color_timer > 60:
+            self.color_timer = 0
+        # Изменение цвета лестницы в зависимости от таймера
+        self.current_color = (
+            173 - int(50 * abs((self.color_timer / 30) - 1)),
+            216 - int(50 * abs((self.color_timer / 30) - 1)),
+            230 - int(50 * abs((self.color_timer / 30) - 1))
+        )
         lad_height = 0.6  # Высота одной секции лестницы
         for i in range(self.length):
             # Координаты для отрисовки лестницы
@@ -601,9 +693,9 @@ class Ladder:
             left_coord = self.x_pos
             right_coord = left_coord + section_width
             # Отрисовка линий лестницы
-            pygame.draw.line(screen, lad_color, (left_coord, top_coord), (left_coord, bot_coord), line_width)
-            pygame.draw.line(screen, lad_color, (right_coord, top_coord), (right_coord, bot_coord), line_width)
-            pygame.draw.line(screen, lad_color, (left_coord, mid_coord), (right_coord, mid_coord), line_width)
+            pygame.draw.line(screen, self.current_color, (left_coord, top_coord), (left_coord, bot_coord), line_width)
+            pygame.draw.line(screen, self.current_color, (right_coord, top_coord), (right_coord, bot_coord), line_width)
+            pygame.draw.line(screen, self.current_color, (left_coord, mid_coord), (right_coord, mid_coord), line_width)
         # Тело лестницы (для коллизий)
         body = pygame.rect.Rect((self.x_pos, self.y_pos - section_height),
                                 (section_width, (lad_height * self.length * section_height + section_height)))
@@ -707,6 +799,9 @@ def draw_kong():
     else:
         dk_img = pygame.transform.flip(dk1, True, False)  # Отражение изображения
         screen.blit(barrel_img, (250, 250))  # Отрисовка бочки
+    # Увеличение скорости броска бочек на высоких уровнях
+    if active_level > 2:
+        barrel_spawn_time = max(120, 360 - active_level * 60)  # Уменьшение времени между бросками
     screen.blit(dk_img, (3.5 * section_width, row6_y - 5.5 * section_height))  # Отрисовка Донки Конга
 
 
@@ -735,6 +830,9 @@ def barrel_collide(reset):
     under = pygame.rect.Rect((player.rect[0], player.rect[1] + 2 * section_height), (player.rect[2], player.rect[3]))
     for brl in barrels:
         if brl.rect.colliderect(player.hitbox):  # Если игрок столкнулся с бочкой
+            if random.randint(0, 10) == 10:  # Случайный шанс взрыва бочки
+                flame = Flame(brl.rect.centerx, brl.rect.centery)  # Создание огненного шара
+                flames.add(flame)
             reset = True  # Сброс игры
         elif not player.landed and not player.over_barrel and under.colliderect(brl):  # Если игрок перепрыгнул бочку
             player.over_barrel = True
@@ -763,6 +861,8 @@ def reset():
     bonus = 6000  # Сброс бонусных очков
     player.kill()  # Удаление текущего игрока
     player = Player(250, window_height - 130)  # Создание нового игрока
+    player.invincible = True  # Включение неуязвимости
+    player.invincible_timer = 120  # Установка таймера неуязвимости (2 секунды)
     first_fireball_trigger = False  # Сброс флага первого огненного шара
     barrel_spawn_time = 360  # Сброс времени появления бочек
     barrel_count = barrel_spawn_time / 2  # Сброс счетчика бочек
